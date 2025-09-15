@@ -94,6 +94,16 @@ jobs:
         run: |
           cd kernel_workspace
           cd common
+          
+          find drivers/input/ -name "*.c" -exec grep -l "devm_pinctrl_get\|pinctrl_select_state\|pinctrl_lookup_state" {} \; | \
+          while read file; do
+              echo "Fixing $file"
+              if ! grep -q "linux/pinctrl/consumer.h" "$file"; then
+                  sed -i '10i #include <linux/pinctrl/consumer.h>' "$file"
+              fi
+              sed -i 's/int rc;/int rc = 0;/g' "$file"
+          done
+          
           curl -L https://raw.githubusercontent.com/Subeesh97/kernel_build/refs/heads/main/star_defconfig -o arch/arm64/configs/star_defconfig
           echo "CONFIG_KALLSYMS=y" >> ./arch/arm64/configs/star_defconfig
           echo "CONFIG_KALLSYMS_ALL=y" >> ./arch/arm64/configs/star_defconfig
